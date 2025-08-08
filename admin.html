@@ -4,24 +4,56 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>DANNAND Admin Panel</title>
-  <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
-  <h1>🚚 Admin - Update Delivery</h1>
-  <input id="code" placeholder="Code (DANNAND123)" /><br>
-  <input id="user" placeholder="User Name" /><br>
-  <input id="address" placeholder="Address" /><br>
-  <input id="quantity" placeholder="Quantity" type="number" /><br>
-  <input id="billing" placeholder="Billing Value" type="number" /><br>
-  <input id="eta" placeholder="ETA (YYYY-MM-DD)" /><br>
-  <select id="status">
-    <option value="Packed">Packed</option>
-    <option value="Shipped">Shipped</option>
-    <option value="Out for Delivery">Out for Delivery</option>
-    <option value="Delivered">Delivered</option>
-  </select><br>
-  <button onclick="updateDelivery()">Update</button>
+  <h1>Update Delivery</h1>
+  <input type="text" id="code" placeholder="Code (e.g. DANNAND123)" />
+  <input type="text" id="name" placeholder="Name" />
+  <input type="text" id="address" placeholder="Address" />
+  <input type="number" id="quantity" placeholder="Quantity" />
+  <input type="number" id="billing" placeholder="Billing Amount" />
+  <input type="text" id="eta" placeholder="ETA" />
+  <input type="text" id="status" placeholder="Status" />
+  <button onclick="updateDelivery()">Save</button>
 
-  <script type="module" src="assets/app.js"></script>
+  <p id="msg"></p>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAcXYf4tCPSqgoetSFWM_Tle59fl6LzXv8",
+      authDomain: "dannanddelivery.firebaseapp.com",
+      databaseURL: "https://dannanddelivery-default-rtdb.firebaseio.com",
+      projectId: "dannanddelivery",
+      storageBucket: "dannanddelivery.firebasestorage.app",
+      messagingSenderId: "126272613634",
+      appId: "1:126272613634:web:311a99b5a6f48b8671661b",
+      measurementId: "G-6EDB7ERF0C"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    window.updateDelivery = function() {
+      const code = document.getElementById("code").value.trim();
+      set(ref(db, `deliveries/${code}`), {
+        name: document.getElementById("name").value,
+        address: document.getElementById("address").value,
+        quantity: document.getElementById("quantity").value,
+        billing: document.getElementById("billing").value,
+        type: "Prepaid",
+        eta: document.getElementById("eta").value,
+        status: document.getElementById("status").value
+      })
+      .then(() => {
+        document.getElementById("msg").innerText = "Updated successfully!";
+      })
+      .catch((err) => {
+        document.getElementById("msg").innerText = "Error: " + err;
+      });
+    }
+  </script>
 </body>
 </html>
