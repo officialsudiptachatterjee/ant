@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DANNAND Admin Panel</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <h1>🚚 Admin - Update Delivery</h1>
+  <input id="code" placeholder="Code (DANNAND123)" /><br>
+  <input id="user" placeholder="User Name" /><br>
+  <input id="address" placeholder="Address" /><br>
+  <input id="quantity" placeholder="Quantity" type="number" /><br>
+  <input id="billing" placeholder="Billing Value" type="number" /><br>
+  <input id="eta" placeholder="ETA (YYYY-MM-DD)" /><br>
+  <select id="status">
+    <option value="Packed">Packed</option>
+    <option value="Shipped">Shipped</option>
+    <option value="Out for Delivery">Out for Delivery</option>
+    <option value="Delivered">Delivered</option>
+  </select><br>
+  <button onclick="updateDelivery()">Update</button>
+
+  <script type="module" src="assets/app.js"></script>
+</body>
+</html>
