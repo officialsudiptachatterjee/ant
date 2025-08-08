@@ -4,15 +4,51 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>DANNAND Delivery Tracking</title>
-  <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
-  <h1>📦 DANNAND Delivery Tracking</h1>
-  <input id="codeInput" placeholder="Enter Code (e.g., DANNAND123)" />
+  <h1>Track Your Delivery</h1>
+  <input type="text" id="trackingCode" placeholder="Enter code e.g. DANNAND123" />
   <button onclick="trackDelivery()">Track</button>
-  
+
   <div id="result"></div>
 
-  <script type="module" src="assets/app.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAcXYf4tCPSqgoetSFWM_Tle59fl6LzXv8",
+      authDomain: "dannanddelivery.firebaseapp.com",
+      databaseURL: "https://dannanddelivery-default-rtdb.firebaseio.com",
+      projectId: "dannanddelivery",
+      storageBucket: "dannanddelivery.firebasestorage.app",
+      messagingSenderId: "126272613634",
+      appId: "1:126272613634:web:311a99b5a6f48b8671661b",
+      measurementId: "G-6EDB7ERF0C"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    window.trackDelivery = async function() {
+      const code = document.getElementById("trackingCode").value.trim();
+      const dbRef = ref(db);
+      const snapshot = await get(child(dbRef, `deliveries/${code}`));
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        document.getElementById("result").innerHTML = `
+          <p><b>Name:</b> ${data.name}</p>
+          <p><b>Address:</b> ${data.address}</p>
+          <p><b>Quantity:</b> ${data.quantity}</p>
+          <p><b>Billing:</b> ₹${data.billing}</p>
+          <p><b>Type:</b> ${data.type}</p>
+          <p><b>ETA:</b> ${data.eta}</p>
+          <p><b>Status:</b> ${data.status}</p>
+        `;
+      } else {
+        document.getElementById("result").innerHTML = `<p>No delivery found for ${code}</p>`;
+      }
+    }
+  </script>
 </body>
 </html>
