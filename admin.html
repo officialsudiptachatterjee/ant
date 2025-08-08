@@ -1,26 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DANNAND Admin Panel</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DANNAND Admin Panel</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(-45deg, #6a11cb, #2575fc, #ff416c, #ff4b2b);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    color: white;
+  }
+  @keyframes gradientBG {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+  .container {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    border-radius: 15px;
+    width: 100%;
+    max-width: 800px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    text-align: center;
+  }
+  h1 {
+    margin-bottom: 20px;
+  }
+  form {
+    margin-bottom: 20px;
+  }
+  input,
+  select,
+  button {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+  }
+  button {
+    background: #ff4b2b;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  button:hover {
+    background: #ff416c;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+  }
+  th,
+  td {
+    padding: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    text-align: center;
+  }
+  th {
+    background: rgba(0, 0, 0, 0.3);
+  }
+</style>
 </head>
 <body>
-  <h1>Update Delivery</h1>
-  <input type="text" id="code" placeholder="Code (e.g. DANNAND123)" />
-  <input type="text" id="name" placeholder="Name" />
-  <input type="text" id="address" placeholder="Address" />
-  <input type="number" id="quantity" placeholder="Quantity" />
-  <input type="number" id="billing" placeholder="Billing Amount" />
-  <input type="text" id="eta" placeholder="ETA" />
-  <input type="text" id="status" placeholder="Status" />
-  <button onclick="updateDelivery()">Save</button>
+  <div class="container">
+    <h1>📦 DANNAND Admin Panel</h1>
 
-  <p id="msg"></p>
+    <form id="adminForm">
+      <input type="text" id="deliveryId" placeholder="Delivery ID" readonly />
+      <input type="text" id="customerName" placeholder="Customer Name" required />
+      <input type="text" id="address" placeholder="Address" required />
+      <input type="number" id="quantity" placeholder="Quantity" required />
+      <input type="number" id="billingValue" placeholder="Billing Value (INR)" required />
+      <select id="status">
+        <option value="Shipped">Shipped</option>
+        <option value="Delayed">Delayed</option>
+        <option value="Agent Issue">Agent Issue</option>
+      </select>
+      <input type="date" id="eta" required />
+      <button type="submit">Save Delivery</button>
+    </form>
+
+    <h2>📋 Recent Deliveries</h2>
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th>Delivery ID</th>
+          <th>Name</th>
+          <th>Status</th>
+          <th>Billing</th>
+          <th>ETA</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      set,
+      onValue,
+      get,
+      child,
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAcXYf4tCPSqgoetSFWM_Tle59fl6LzXv8",
@@ -30,30 +134,59 @@
       storageBucket: "dannanddelivery.firebasestorage.app",
       messagingSenderId: "126272613634",
       appId: "1:126272613634:web:311a99b5a6f48b8671661b",
-      measurementId: "G-6EDB7ERF0C"
+      measurementId: "G-6EDB7ERF0C",
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    window.updateDelivery = function() {
-      const code = document.getElementById("code").value.trim();
-      set(ref(db, `deliveries/${code}`), {
-        name: document.getElementById("name").value,
-        address: document.getElementById("address").value,
-        quantity: document.getElementById("quantity").value,
-        billing: document.getElementById("billing").value,
-        type: "Prepaid",
-        eta: document.getElementById("eta").value,
-        status: document.getElementById("status").value
-      })
-      .then(() => {
-        document.getElementById("msg").innerText = "Updated successfully!";
-      })
-      .catch((err) => {
-        document.getElementById("msg").innerText = "Error: " + err;
-      });
+    function generateDeliveryId() {
+      return "DANNAND" + Math.floor(1000 + Math.random() * 9000);
     }
+
+    const deliveryIdInput = document.getElementById("deliveryId");
+    const adminForm = document.getElementById("adminForm");
+    const tableBody = document.querySelector("#dataTable tbody");
+
+    deliveryIdInput.value = generateDeliveryId();
+
+    adminForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const id = deliveryIdInput.value;
+      const data = {
+        customerName: document.getElementById("customerName").value,
+        address: document.getElementById("address").value,
+        quantity: Number(document.getElementById("quantity").value),
+        billingValue: Number(document.getElementById("billingValue").value),
+        status: document.getElementById("status").value,
+        eta: document.getElementById("eta").value,
+        type: "Prepaid",
+      };
+
+      await set(ref(db, "deliveries/" + id), data);
+
+      alert("✅ Delivery saved!");
+      adminForm.reset();
+      deliveryIdInput.value = generateDeliveryId();
+    });
+
+    onValue(ref(db, "deliveries"), (snapshot) => {
+      tableBody.innerHTML = "";
+      snapshot.forEach((childSnapshot) => {
+        const id = childSnapshot.key;
+        const d = childSnapshot.val();
+        tableBody.innerHTML += `
+          <tr>
+            <td>${id}</td>
+            <td>${d.customerName}</td>
+            <td>${d.status}</td>
+            <td>₹${d.billingValue}</td>
+            <td>${d.eta}</td>
+          </tr>
+        `;
+      });
+    });
   </script>
 </body>
 </html>
