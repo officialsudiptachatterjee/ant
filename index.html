@@ -1,54 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DANNAND Delivery Tracking</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delivery Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(-45deg, #ff6f61, #ffcc70, #6a82fb, #fc5c7d);
+        background-size: 400% 400%;
+        animation: gradientBG 10s ease infinite;
+    }
+
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .tracker-box {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(12px);
+        padding: 30px;
+        border-radius: 20px;
+        text-align: center;
+        color: white;
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        animation: fadeInUp 1s ease forwards;
+    }
+
+    @keyframes fadeInUp {
+        from { transform: translateY(50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    h1 {
+        font-size: 28px;
+        margin-bottom: 20px;
+    }
+
+    input {
+        padding: 12px;
+        border-radius: 10px;
+        border: none;
+        width: 220px;
+        font-size: 16px;
+        margin-bottom: 15px;
+        outline: none;
+    }
+
+    button {
+        padding: 12px 25px;
+        background: linear-gradient(90deg, #ff512f, #dd2476);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    button:hover {
+        background: linear-gradient(90deg, #dd2476, #ff512f);
+        transform: scale(1.05);
+    }
+
+    .status {
+        margin-top: 20px;
+        font-size: 18px;
+        min-height: 24px;
+        animation: fadeIn 0.5s ease forwards;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
 </head>
 <body>
-  <h1>Track Your Delivery</h1>
-  <input type="text" id="trackingCode" placeholder="Enter code e.g. DANNAND123" />
-  <button onclick="trackDelivery()">Track</button>
 
-  <div id="result"></div>
+<div class="tracker-box">
+    <h1>📦 Track Your Delivery</h1>
+    <input type="text" id="trackingId" placeholder="Enter Tracking ID">
+    <br>
+    <button onclick="checkStatus()">Check Status</button>
+    <div class="status" id="statusDisplay"></div>
+</div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-    import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAcXYf4tCPSqgoetSFWM_Tle59fl6LzXv8",
-      authDomain: "dannanddelivery.firebaseapp.com",
-      databaseURL: "https://dannanddelivery-default-rtdb.firebaseio.com",
-      projectId: "dannanddelivery",
-      storageBucket: "dannanddelivery.firebasestorage.app",
-      messagingSenderId: "126272613634",
-      appId: "1:126272613634:web:311a99b5a6f48b8671661b",
-      measurementId: "G-6EDB7ERF0C"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyAcXYf4tCPSqgoetSFWM_Tle59fl6LzXv8",
+    authDomain: "dannanddelivery.firebaseapp.com",
+    projectId: "dannanddelivery",
+    storageBucket: "dannanddelivery.firebasestorage.app",
+    messagingSenderId: "126272613634",
+    appId: "1:126272613634:web:311a99b5a6f48b8671661b",
+    measurementId: "G-6EDB7ERF0C"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-    window.trackDelivery = async function() {
-      const code = document.getElementById("trackingCode").value.trim();
-      const dbRef = ref(db);
-      const snapshot = await get(child(dbRef, `deliveries/${code}`));
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        document.getElementById("result").innerHTML = `
-          <p><b>Name:</b> ${data.name}</p>
-          <p><b>Address:</b> ${data.address}</p>
-          <p><b>Quantity:</b> ${data.quantity}</p>
-          <p><b>Billing:</b> ₹${data.billing}</p>
-          <p><b>Type:</b> ${data.type}</p>
-          <p><b>ETA:</b> ${data.eta}</p>
-          <p><b>Status:</b> ${data.status}</p>
-        `;
-      } else {
-        document.getElementById("result").innerHTML = `<p>No delivery found for ${code}</p>`;
-      }
+  async function checkStatus() {
+    const trackingId = document.getElementById('trackingId').value.trim();
+    const statusDisplay = document.getElementById('statusDisplay');
+
+    if (!trackingId) {
+      statusDisplay.textContent = "❌ Please enter a tracking ID";
+      return;
     }
-  </script>
+
+    const docRef = doc(db, "deliveries", trackingId);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      statusDisplay.textContent = "✅ Status: " + docSnap.data().status;
+    } else {
+      statusDisplay.textContent = "❌ No record found for this ID";
+    }
+  }
+</script>
+
 </body>
 </html>
